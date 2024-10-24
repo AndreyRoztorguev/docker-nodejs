@@ -15,3 +15,9 @@ This repository is a sample Node.js application for Docker's documentation.
 ```
 docker compose  up --build
 ```
+
+## Test Stage
+
+```
+docker build -t node-docker-image-test --progress=plain --no-cache --target test .
+```

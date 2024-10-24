@@ -6,6 +6,7 @@ services:
     server:
         build:
             context: .
+            target: dev
         environment:
             NODE_ENV: production
             SERVER_PORT: 8080
@@ -15,6 +16,9 @@ services:
             POSTGRES_DB: docker-nodejs-db
         ports:
             - 8080:8080
+            - 9229:9229
+        volumes:
+            - ./src:/usr/src/app/src
         depends_on:
             db:
                 condition: service_healthy

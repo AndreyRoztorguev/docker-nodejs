@@ -8,13 +8,16 @@
 
 ARG NODE_VERSION=20.17.0
 
-FROM node:${NODE_VERSION}-alpine
+FROM node:${NODE_VERSION}-alpine as base
 
 # Use production node environment by default.
 ENV NODE_ENV production
 
 
 WORKDIR /usr/src/app
+
+# Dev Stage
+FROM base as dev
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.npm to speed up subsequent builds.
@@ -23,13 +26,8 @@ WORKDIR /usr/src/app
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+    npm ci --include=dev
 
-
-
-# Copy .env file    
-#COPY ./.env .env
-  
 # Run the application as a non-root user.
 USER node
 
@@ -40,4 +38,35 @@ COPY . .
 EXPOSE 8080
 
 # Run the application.
+CMD npm run dev
+
+# Prod Stage
+FROM base as prod
+
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
+
+USER node
+
+COPY . .
+
 CMD npm start
+
+# Test Stage
+
+FROM base as test
+
+ENV NODE_ENV test
+
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci --include=dev
+
+USER node
+
+COPY . .
+
+RUN npm run test
