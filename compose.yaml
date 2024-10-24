@@ -1,0 +1,44 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+services:
+    server:
+        build:
+            context: .
+        environment:
+            NODE_ENV: production
+            SERVER_PORT: 8080
+            POSTGRES_HOST: db
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: docker-nodejs-db
+        ports:
+            - 8080:8080
+        depends_on:
+            db:
+                condition: service_healthy
+
+    db:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: docker-nodejs-db
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        expose:
+            - 5432
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U postgres']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    db-data:
+
+secrets:
+    db-password:
+        file: db/password.txt
